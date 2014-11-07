@@ -1,0 +1,455 @@
+<script src="/socket.io/socket.io.js"></script>
+<script src="http://code.jquery.com/jquery-latest.min.js"></script>
+<script type="text/javascript" src="http://www.google.com/jsapi"></script>
+<script type="text/javascript">
+$(document).ready(function(){
+
+	var socket  = io.connect();
+	var $form    = $('#send');
+	var $msgbox  = $('#message');
+	var $chatdiv = $('#content');
+	var $userform= $('#userform');
+	var $user    = $('#username');
+	var $test    = $('#test');
+	var $userwrapper = $('#userWrapper');
+	var $messagewrapper = $('#messageWrapper');
+	var $wait = $('#wait');
+	var $header = $('#header');
+	var $valid = $('#validConv');
+	var $end = $('#convEnd');
+	var $GUI = $('#GUIreconn');
+	var $goHome = $('#goHome');
+	var $hidden = $('#hidden');
+	var $connect = $('#connectButton');
+	var $users = $('#users');
+	var $msg = $('#msg');
+	var $disc = $('#disc');
+	var $info = $('#info');
+	var $check_in = $('#location');
+var identifier;
+
+		$userwrapper.show();
+		$msg.hide();
+         $info.show();
+			
+$userform.submit(function(event){
+	event.preventDefault();
+	var Url = document.URL;
+		urlShort = Url.substr(35,15);
+	socket.emit('adduser', $user.val(), $hidden.text());
+	});
+socket.on("redir", function(data){
+
+	self.location="appclientV5.html";
+});
+socket.on('success', function(id,loc,data){
+console.log("success" + data);
+socket.emit('randomize', id, loc, data);
+$test.hide();
+$info.hide();
+});
+
+socket.on('error', function(error){
+	var string = "::choose another username::";
+	if(error == string){
+$test.show();
+}
+});
+socket.on('waiting',function(data){
+$wait.show();
+$users.hide();
+$end.hide();
+$info.hide();
+$messagewrapper.hide();
+	$('#userWrapper').hide();
+	displayMsg(data);
+});
+socket.on("joined", function(data, loc, name){
+	identifier = data;
+	console.log(identifier);
+$wait.hide();
+$users.hide();
+$userwrapper.hide();
+$messagewrapper.show();
+$header.show();
+$valid.show();
+$end.hide();
+$info.hide();
+$(".content").empty();
+$header.html("<font color='blue'><b> you </font></b> are now talking to <font color='red'><b>" + name + "</font></b><br>");
+$disc.show();
+
+});
+
+$form.submit(function(event){
+		console.log(identifier);
+		event.preventDefault();
+		socket.emit('entermessage', $msgbox.val(), identifier, $user.val());
+		displayMsg("<br><font color=blue><b>you</font></b>:  <b>" + wordwrap($msgbox.val(),30,"<br>", true) + "</b>");
+		$msgbox.val('');
+		updateScroll();
+	});
+socket.on('message', function(data,name){
+	$wait.hide();
+    $userwrapper.hide();
+    $messagewrapper.show();
+    $valid.show();
+	displayMsg("<br>" + "<font color=red><b>" +  name + "</b></font>:  <b>" + wordwrap(data,30,"<br>", true) + "</b>" );
+	updateScroll();
+});
+socket.on('discon', function(data){
+	if(data){
+	displayMsg("<br>" + data);
+	console.log(data);
+	$valid.hide();
+	$end.show();
+	$disc.hide();
+		updateScroll();
+} else {
+
+	displayMsg("no data to display");
+}
+});
+socket.on("total",function(data){
+
+	nd = Math.floor(Math.random() * (239 - 228 + 1)) + 228;
+
+	$users.text("Users Online : " + nd + " (including you)");
+
+
+});
+
+$GUI.submit(function(event){
+	event.preventDefault();
+	console.log("logging username before function call....");
+	
+	socket.emit('adduser',$user.val(), $hidden.text());
+
+});
+$disc.submit(function(event){
+});
+
+function displayMsg(data){
+
+	$chatdiv.append(data);
+
+}
+function updateScroll(){
+    var element = document.getElementById("content");
+    element.scrollTop = element.scrollHeight;
+}
+function wordwrap (str, int_width, str_break, cut) {
+  var m = ((arguments.length >= 2) ? arguments[1] : 75);
+  var b = ((arguments.length >= 3) ? arguments[2] : "\n");
+  var c = ((arguments.length >= 4) ? arguments[3] : false);
+
+  var i, j, l, s, r;
+
+  str += '';
+
+  if (m < 1) {
+    return str;
+  }
+
+  for (i = -1, l = (r = str.split(/\r\n|\n|\r/)).length; ++i < l; r[i] += s) {
+    for (s = r[i], r[i] = ""; s.length > m; r[i] += s.slice(0, j) + ((s = s.slice(j)).length ? b : "")) {
+      j = c == 2 || (j = s.slice(0, m + 1).match(/\S*(\s)?$/))[1] ? m : j.input.length - j[0].length || c == 1 && m || j.input.length + (j = s.slice(m).match(/^\S*/)).input.length;
+    }
+  }
+
+  return r.join("\n");
+}
+
+});
+
+
+</script>
+
+<html>
+<head>
+
+<style>
+#messageWrapper{
+
+	display: none;
+}
+#wait{
+
+	display: none;
+}
+#test{
+
+	display: none;
+}
+#validConv{
+
+	display:none;
+}
+#convEnd{
+	display:none;
+}
+#hidden{
+	display:none;
+}
+#connect{
+
+	display:none;
+}
+#userwrapper{
+
+	display:none;
+}
+#disc{
+	display:none;
+}
+#info{
+
+	display:none;
+}
+</style>
+
+</head>
+<div id="msg"><center><br><font color="#FE2E2E"><b>You are not on campus, currently the only campus supported is<br> Rowan University</b></center></font></b></div>
+<div id="errordiv"></div>
+<div id='hidden'></div>
+<div id="locationwrapper">
+<form id="">
+
+<input type="submit" id="connect" class="connectButton">
+
+</form>
+</div>
+
+
+<div id='messageWrapper'>
+	<div id="header">  </div><br>
+<div class="content" id="content" style="height:300px;width:1100px;overflow-y:auto;position:relative;bottom:0;background-color:#E6E6E6;">
+</div>
+</div>
+<div id="validConv">
+   <form id="send">
+	<input type="text" id="message" maxlength="180" style="height: 35px; width:455px"></input>
+	 <input type="submit" style="height:35px; width:65px" value="send"></input>
+      </form>
+      </div>
+      <div id="convEnd">
+      	<form id="GUIreconn">
+      		<br>
+      		<input type="submit" value="connect" class="connectButton"></input> &nbsp&nbsp 
+      	</form>
+      	&nbsp&nbsp 
+      	<form id="goHome">
+      		<br>
+      		<input type="submit" value="go home" class="home"></input>
+      	</form>
+
+      </div>
+      <form id="disc">
+      			<br>
+      		<input type="submit" value="Disconnect" class="home"></input>
+      	</form>
+      		
+<div id="userWrapper">
+<form id="userform">
+	<center><br><br><br><br><b><font size="5">-onCampus-</font><br>
+		Connect with College kids...<br></b>
+	<input type="text" id="username" maxlength="30" style="height: 45px; width:455px" onfocus="if
+	(this.value==this.defaultValue) this.value=''" value='                            make a user name.. its temporary so be creative'><br>
+</input><br><br>
+		<input type="submit" value="Check In" id="location" class ="location"></input>
+
+	</center>
+	</form>
+</div>
+<p id="test">:choose another username:</p>
+<p id="wait"> Waiting for users to connect </p>
+<div id="userdiv"></div>
+<div id="users"></div>
+	<div id = "info">
+	<br><br><center>
+		<b>
+	On Campus is a service that allows you to talk to another<br> other or nearby college students.
+</b></center>
+</div>
+
+ <head>
+<style type="text/css">
+
+.connectbutton {
+	-moz-box-shadow:inset 0px 1px 0px 0px #bbdaf7;
+	-webkit-box-shadow:inset 0px 1px 0px 0px #bbdaf7;
+	box-shadow:inset 0px 1px 0px 0px #bbdaf7;
+	background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #79bbff), color-stop(1, #378de5) );
+	background:-moz-linear-gradient( center top, #79bbff 5%, #378de5 100% );
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#79bbff', endColorstr='#378de5');
+	background-color:#79bbff;
+	-webkit-border-top-left-radius:22px;
+	-moz-border-radius-topleft:22px;
+	border-top-left-radius:22px;
+	-webkit-border-top-right-radius:22px;
+	-moz-border-radius-topright:22px;
+	border-top-right-radius:22px;
+	-webkit-border-bottom-right-radius:22px;
+	-moz-border-radius-bottomright:22px;
+	border-bottom-right-radius:22px;
+	-webkit-border-bottom-left-radius:22px;
+	-moz-border-radius-bottomleft:22px;
+	border-bottom-left-radius:22px;
+	text-indent:0;
+	border:1px solid #84bbf3;
+	display:inline-block;
+	color:#ffffff;
+	font-family:Arial;
+	font-size:15px;
+	font-weight:bold;
+	font-style:normal;
+	height:54px;
+	line-height:54px;
+	width:123px;
+	text-decoration:none;
+	text-align:center;
+	text-shadow:1px 1px 0px #528ecc;
+}
+.connectbutton:hover {
+	background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #378de5), color-stop(1, #79bbff) );
+	background:-moz-linear-gradient( center top, #378de5 5%, #79bbff 100% );
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#378de5', endColorstr='#79bbff');
+	background-color:#378de5;
+}.connectbutton:active {
+	position:relative;
+	top:1px;
+}
+.discon {
+	-moz-box-shadow:inset 0px 1px 0px 0px #fce2c1;
+	-webkit-box-shadow:inset 0px 1px 0px 0px #fce2c1;
+	box-shadow:inset 0px 1px 0px 0px #fce2c1;
+	background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #ffc477), color-stop(1, #ff0000) );
+	background:-moz-linear-gradient( center top, #ffc477 5%, #ff0000 100% );
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffc477', endColorstr='#ff0000');
+	background-color:#ffc477;
+	-webkit-border-top-left-radius:20px;
+	-moz-border-radius-topleft:20px;
+	border-top-left-radius:20px;
+	-webkit-border-top-right-radius:20px;
+	-moz-border-radius-topright:20px;
+	border-top-right-radius:20px;
+	-webkit-border-bottom-right-radius:20px;
+	-moz-border-radius-bottomright:20px;
+	border-bottom-right-radius:20px;
+	-webkit-border-bottom-left-radius:20px;
+	-moz-border-radius-bottomleft:20px;
+	border-bottom-left-radius:20px;
+	text-indent:0;
+	border:1px solid #eeb44f;
+	display:inline-block;
+	color:#ffffff;
+	font-family:Arial Black;
+	font-size:15px;
+	font-weight:bold;
+	font-style:normal;
+	height:65px;
+	line-height:65px;
+	width:131px;
+	text-decoration:none;
+	text-align:center;
+	text-shadow:1px 1px 0px #cc9f52;
+}
+.discon:hover {
+	background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #ff0000), color-stop(1, #ffc477) );
+	background:-moz-linear-gradient( center top, #ff0000 5%, #ffc477 100% );
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff0000', endColorstr='#ffc477');
+	background-color:#ff0000;
+}.discon:active {
+	position:relative;
+	top:1px;
+}
+.home {
+	-moz-box-shadow:inset 0px 1px 0px 0px #f29c93;
+	-webkit-box-shadow:inset 0px 1px 0px 0px #f29c93;
+	box-shadow:inset 0px 1px 0px 0px #f29c93;
+	background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #fe1a00), color-stop(1, #ce0100) );
+	background:-moz-linear-gradient( center top, #fe1a00 5%, #ce0100 100% );
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#fe1a00', endColorstr='#ce0100');
+	background-color:#fe1a00;
+	-webkit-border-top-left-radius:22px;
+	-moz-border-radius-topleft:22px;
+	border-top-left-radius:22px;
+	-webkit-border-top-right-radius:22px;
+	-moz-border-radius-topright:22px;
+	border-top-right-radius:22px;
+	-webkit-border-bottom-right-radius:22px;
+	-moz-border-radius-bottomright:22px;
+	border-bottom-right-radius:22px;
+	-webkit-border-bottom-left-radius:22px;
+	-moz-border-radius-bottomleft:22px;
+	border-bottom-left-radius:22px;
+	text-indent:0;
+	border:1px solid #d83526;
+	display:inline-block;
+	color:#ffffff;
+	font-family:Arial;
+	font-size:15px;
+	font-weight:bold;
+	font-style:normal;
+	height:54px;
+	line-height:54px;
+	width:123px;
+	text-decoration:none;
+	text-align:center;
+	text-shadow:1px 1px 0px #b23e35;
+}
+.home:hover {
+	background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #ce0100), color-stop(1, #fe1a00) );
+	background:-moz-linear-gradient( center top, #ce0100 5%, #fe1a00 100% );
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ce0100', endColorstr='#fe1a00');
+	background-color:#ce0100;
+}.home:active {
+	position:relative;
+	top:1px;
+}
+.location {
+	-moz-box-shadow:inset 0px 1px 0px 0px #ffffff;
+	-webkit-box-shadow:inset 0px 1px 0px 0px #ffffff;
+	box-shadow:inset 0px 1px 0px 0px #ffffff;
+	background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #e88e3f), color-stop(1, #e88e3f) );
+	background:-moz-linear-gradient( center top, #e88e3f 5%, #e88e3f 100% );
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#e88e3f', endColorstr='#e88e3f');
+	background-color:#e88e3f;
+	-webkit-border-top-left-radius:10px;
+	-moz-border-radius-topleft:10px;
+	border-top-left-radius:10px;
+	-webkit-border-top-right-radius:10px;
+	-moz-border-radius-topright:10px;
+	border-top-right-radius:10px;
+	-webkit-border-bottom-right-radius:10px;
+	-moz-border-radius-bottomright:10px;
+	border-bottom-right-radius:10px;
+	-webkit-border-bottom-left-radius:10px;
+	-moz-border-radius-bottomleft:10px;
+	border-bottom-left-radius:10px;
+	text-indent:0;
+	border:2px solid #fafafa;
+	display:inline-block;
+	color:#fff7ff;
+	font-family:arial;
+	font-size:15px;
+	font-weight:bold;
+	font-style:normal;
+	height:50px;
+	line-height:50px;
+	width:146px;
+	text-decoration:none;
+	text-align:center;
+	text-shadow:1px 1px 0px #e88e3f;
+}
+.location:hover {
+	background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #e88e3f), color-stop(1, #e88e3f) );
+	background:-moz-linear-gradient( center top, #e88e3f 5%, #e88e3f 100% );
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#e88e3f', endColorstr='#e88e3f');
+	background-color:#e88e3f;
+}.location:active {
+	position:relative;
+	top:1px;
+}
+
+</html>
